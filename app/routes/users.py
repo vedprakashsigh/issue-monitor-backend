@@ -9,15 +9,6 @@ users_bp = Blueprint("users", __name__)
 
 @users_bp.route("/api/register", methods=["POST"])
 def register():
-    """
-    Register a new user by creating a User object with the provided data.
-
-    Parameters:
-        None
-
-    Returns:
-        A JSON response indicating the success of user registration.
-    """
     data = request.get_json()
     new_user = User(
         name=data["name"], username=data["username"], email=data["email"], projects=[]
@@ -30,16 +21,6 @@ def register():
 
 @users_bp.route("/api/login", methods=["POST"])
 def login():
-    """
-    Logs in a user by checking if the provided username and password match a user in the database.
-
-    Parameters:
-        None
-
-    Returns:
-        A JSON response containing an access token if the login is successful, or a JSON response with an error message and a status code of 401 if the login is unsuccessful.
-    """
-
     data = request.get_json()
     username = data["username"]
     password = data["password"]
@@ -54,8 +35,6 @@ def login():
 @users_bp.route("/api/user", methods=["GET"])
 @jwt_required()
 def get_user():
-    """
-    Retrieves the current user using the get_jwt_identity function and returns a JSON response containing the current user information along with a status code of 200.
-    """
     current_user = get_jwt_identity()
-    return jsonify(logged_in_as=current_user), 200
+    user = User.query.filter_by(username=current_user["username"]).first()
+    return jsonify({"logged_in_as": current_user, "user_id": user.id}), 200

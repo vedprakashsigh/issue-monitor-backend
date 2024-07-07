@@ -8,19 +8,11 @@ issues_bp = Blueprint("issues", __name__)
 
 @issues_bp.route("/api/issues", methods=["GET"])
 def get_issues():
-    """
-    Retrieves all issues from the database and returns them as a JSON response.
+    project_id = request.args.get("project_id", type=int)
+    if not project_id:
+        return jsonify({"message": "Project Id Not Found"}), 404
 
-    Returns:
-        A JSON response containing a list of dictionaries, where each dictionary represents an issue.
-        Each dictionary contains the following keys:
-        - 'id': The ID of the issue.
-        - 'title': The title of the issue.
-        - 'description': The description of the issue.
-        - 'status': The status of the issue.
-        - 'project_id': The ID of the project the issue belongs to.
-    """
-    issues: List[Issue] = Issue.query.all()
+    issues: Issue | None = Issue.query.filter_by(project_id=project_id).first()
     return jsonify(
         [
             {
@@ -37,24 +29,16 @@ def get_issues():
 
 @issues_bp.route("/api/issue", methods=["GET"])
 def get_issue():
-    """
-    Retrieves a specific issue from the database based on the provided ID.
-    If the ID is not found, returns a JSON response with 'Id Not Found'.
-    If the issue is not found, returns a JSON response with 'Issue Not Found'.
-
-    Returns:
-        A JSON response containing the details of the retrieved issue, including:
-        - 'id': The ID of the issue.
-        - 'title': The title of the issue.
-        - 'description': The description of the issue.
-        - 'status': The status of the issue.
-        - 'project_id': The ID of the project the issue belongs to.
-    """
+    project_id = request.args.get("project_id", type=int)
     id = request.args.get("id", type=int)
     if not id:
         return jsonify({"message": "Id Not Found"}), 404
+    if not project_id:
+        return jsonify({"message": "Project Id Not Found"}), 404
 
-    issue: Issue | None = Issue.query.get(id)
+    issue: Issue | None = Issue.query.filter(
+        Issue.id == id and Issue.project_id == project_id
+    ).first()
     if not issue:
         return jsonify({"message": "Issue Not Found"}), 404
 
@@ -71,22 +55,15 @@ def get_issue():
 
 @issues_bp.route("/api/issues", methods=["POST"])
 def create_issue():
-    """
-    Creates a new issue in the database based on the provided JSON data.
+    title, description, status, project_id = request.get_json().values()
 
-    Parameters:
-        None
-
-    Returns:
-        A JSON response containing a message indicating the success of the operation and a status code of 200.
-    """
-    title, description, status, project_id = request.get_json()
     new_issue: Issue = Issue(
         title=title,
         description=description,
         status=status,
         project_id=project_id,
     )
+
     db.session.add(new_issue)
     db.session.commit()
     return jsonify({"message": "Issue created successfully!"}), 200
@@ -94,22 +71,11 @@ def create_issue():
 
 @issues_bp.route("/api/issues", methods=["DELETE"])
 def delete_issue():
-    """
-    Deletes an issue from the database based on the provided ID.
-
-    Parameters:
-        None
-
-    Returns:
-        A JSON response containing a message indicating the success of the operation and a status code of 200 if the issue is deleted successfully.
-        If the ID is not found, a JSON response with a message 'Id Not Found' and a status code of 404 is returned.
-        If the issue is not found, a JSON response with a message 'Issue Not Found' and a status code of 404 is returned.
-    """
     id: int | None = request.args.get("id", type=int)
     if not id:
         return jsonify({"message": "Id Not Found"}), 404
 
-    issue: Issue | None = Issue.query.get(id)
+    issue: Issue | None = Issue.query.filter_by(id=id).first()
     if not issue:
         return jsonify({"message": "Issue Not Found"}), 404
 

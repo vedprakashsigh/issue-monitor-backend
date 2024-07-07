@@ -8,7 +8,7 @@ from app.models import User, db
 from app.routes.issues import issues_bp
 from app.routes.projects import projects_bp
 from app.routes.users import users_bp
-from app.utils import jwt, bcrypt
+from app.utils import jwt, bcrypt, migrate
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -30,6 +30,9 @@ def create_app() -> Flask:
 
     # Initialize jwt with the app instance
     jwt.init_app(app)
+
+    # Initialize migrate with the app instance
+    migrate.init_app(app, db)
 
     # Enable CORS for all routes
     CORS(app)
