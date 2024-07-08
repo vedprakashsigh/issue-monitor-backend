@@ -4,11 +4,10 @@ from dotenv import load_dotenv  # type: ignore
 from flask import Flask
 from flask_cors import CORS
 
-from app.models import User, db
 from app.routes.issues import issues_bp
 from app.routes.projects import projects_bp
 from app.routes.users import users_bp
-from app.utils import jwt, bcrypt, migrate
+from app.extentions import jwt, bcrypt, migrate, db
 
 load_dotenv()  # Load environment variables from .env file
 

@@ -1,12 +1,10 @@
 from typing import List
-from app.utils import bcrypt
-from flask_sqlalchemy import SQLAlchemy
-
-
-db = SQLAlchemy()
+from app.extentions import bcrypt, db
 
 
 class Issue(db.Model):
+    __tablename__ = "issue"
+
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
@@ -23,6 +21,8 @@ class Issue(db.Model):
 
 
 class Project(db.Model):
+    __tablename__ = "project"
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
@@ -39,6 +39,8 @@ class Project(db.Model):
 
 
 class User(db.Model):
+    __tablename__ = "user"
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     username = db.Column(db.String(100), nullable=False, unique=True)
