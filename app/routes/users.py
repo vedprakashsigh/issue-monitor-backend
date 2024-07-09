@@ -36,4 +36,6 @@ def login():
 def get_user():
     current_user = get_jwt_identity()
     user = User.query.filter_by(username=current_user["username"]).first()
+    if not user:
+        return jsonify({"message": "User not found"}), 404
     return jsonify({"logged_in_as": current_user, "user_id": user.id}), 200

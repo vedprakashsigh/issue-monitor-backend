@@ -13,6 +13,9 @@ def get_issues():
         return jsonify({"message": "Project Id Not Found"}), 404
 
     issues: Issue | None = Issue.query.filter_by(project_id=project_id).first()
+    if not issues:
+        return jsonify({"message": "Issues Not Found"}), 404
+
     return jsonify(
         [
             {
@@ -36,9 +39,10 @@ def get_issue():
     if not project_id:
         return jsonify({"message": "Project Id Not Found"}), 404
 
-    issue: Issue | None = Issue.query.filter(
-        Issue.id == id and Issue.project_id == project_id
-    ).first()
+    issue: Issue | None = (
+        Issue.query.filter_by(id=id).filter_by(project_id=project_id).first()
+    )
+
     if not issue:
         return jsonify({"message": "Issue Not Found"}), 404
 
@@ -55,7 +59,13 @@ def get_issue():
 
 @issues_bp.route("/api/issues", methods=["POST"])
 def create_issue():
-    title, description, status, project_id = request.get_json().values()
+    data = request.get_json()
+    title = data.get("title")
+    description = data.get("description")
+    status = data.get("status")
+    project_id = data.get("project_id")
+    if not (title and description and status and project_id):
+        return jsonify({"message": "All fields are required"}), 400
 
     new_issue: Issue = Issue(
         title=title,
@@ -69,7 +79,33 @@ def create_issue():
     return jsonify({"message": "Issue created successfully!"}), 200
 
 
-@issues_bp.route("/api/issues", methods=["DELETE"])
+@issues_bp.route("/api/issues", methods=["PATCH"])
+def edit_issue():
+    data = request.get_json()
+    title = data.get("title")
+    description = data.get("description")
+    status = data.get("status")
+    project_id = data.get("project_id")
+    issue_id = data.get("issue_id")
+
+    issue: Issue | None = (
+        Issue.query.filter_by(id=issue_id).filter_by(project_id=project_id).first()
+    )
+    if not issue:
+        return jsonify({"message": "Issue Not Found"}), 404
+
+    if title:
+        issue.title = title
+    if description:
+        issue.description = description
+    if status:
+        issue.status = status
+
+    db.session.commit()
+    return jsonify({"message": "Issue updated successfully!"}), 200
+
+
+@issues_bp.route("/api/issue", methods=["DELETE"])
 def delete_issue():
     id: int | None = request.args.get("id", type=int)
     if not id:

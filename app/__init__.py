@@ -1,6 +1,5 @@
 import os
-from dotenv import load_dotenv  # type: ignore
-
+from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
 
@@ -9,7 +8,7 @@ from app.routes.projects import projects_bp
 from app.routes.users import users_bp
 from app.extentions import jwt, bcrypt, migrate, db
 
-load_dotenv()  # Load environment variables from .env file
+load_dotenv()
 
 
 def create_app() -> Flask:

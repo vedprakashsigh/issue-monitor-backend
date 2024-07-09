@@ -3,12 +3,13 @@ from flask import Blueprint, jsonify, request
 from app.models import User, db, Project, Issue
 from sqlalchemy.orm import joinedload
 
+
 projects_bp = Blueprint("projects", __name__)
 
 
 @projects_bp.route("/api/projects", methods=["GET"])
 def get_projects():
-    user_id: int = request.args.get("user_id")
+    user_id: int | None = request.args.get("user_id", type=int)
     if user_id is None:
         return jsonify({"message": "User ID is required"}), 400
 
@@ -39,7 +40,7 @@ def get_project():
     if user_id is None:
         return jsonify({"message": "User ID is required"}), 400
 
-    project = Project.query.filter_by(id=project_id, user_id=user_id).first()
+    project = Project.query.filter_by(id=project_id).filter_by(user_id=user_id).first()
     if not project:
         return jsonify({"message": "Project Not Found"}), 404
 
@@ -63,10 +64,10 @@ def get_project():
 
 @projects_bp.route("/api/projects", methods=["POST"])
 def create_project():
-    data: Dict[str, str | int] = request.get_json()
-    user_id: int = data.get("user_id")
-    name: str = data.get("name")
-    description: str = data.get("description")
+    data: Dict = request.get_json()
+    user_id: int | None = data.get("user_id")
+    name: str | None = data.get("name")
+    description: str | None = data.get("description")
     if not (name and description and user_id):
         return jsonify({"message": "Name, description, and user_id are required"}), 400
 
@@ -87,7 +88,42 @@ def create_project():
     )
 
 
-@projects_bp.route("/api/projects", methods=["DELETE"])
+@projects_bp.route("/api/projects", methods=["PATCH"])
+def edit_project():
+    data: Dict = request.get_json()
+    user_id: int | None = data.get("user_id")
+    project_id: int | None = data.get("project_id")
+    name: str | None = data.get("name")
+    description: str | None = data.get("description")
+
+    if not user_id or not project_id:
+        return (
+            jsonify({"message": "project_id and user_id are required"}),
+            400,
+        )
+
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    project = Project.query.filter_by(id=project_id).first()
+    if not project:
+        return jsonify({"message": "Project not found"}), 404
+
+    if name:
+        project.name = name
+    if description:
+        project.description = description
+
+    db.session.commit()
+
+    return (
+        jsonify({"id": project.id, "message": "Project updated successfully"}),
+        201,
+    )
+
+
+@projects_bp.route("/api/project", methods=["DELETE"])
 def delete_project():
     project_id = request.args.get("id", type=int)
     if not project_id:
