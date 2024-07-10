@@ -1,5 +1,5 @@
-from typing import List
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 from app.models import db, Issue
 
 
@@ -7,6 +7,7 @@ issues_bp = Blueprint("issues", __name__)
 
 
 @issues_bp.route("/api/issues", methods=["GET"])
+@jwt_required()
 def get_issues():
     project_id = request.args.get("project_id", type=int)
     if not project_id:
@@ -31,6 +32,7 @@ def get_issues():
 
 
 @issues_bp.route("/api/issue", methods=["GET"])
+@jwt_required()
 def get_issue():
     project_id = request.args.get("project_id", type=int)
     id = request.args.get("id", type=int)
@@ -58,6 +60,7 @@ def get_issue():
 
 
 @issues_bp.route("/api/issues", methods=["POST"])
+@jwt_required()
 def create_issue():
     data = request.get_json()
     title = data.get("title")
@@ -80,6 +83,7 @@ def create_issue():
 
 
 @issues_bp.route("/api/issues", methods=["PATCH"])
+@jwt_required()
 def edit_issue():
     data = request.get_json()
     title = data.get("title")
@@ -106,6 +110,7 @@ def edit_issue():
 
 
 @issues_bp.route("/api/issue", methods=["DELETE"])
+@jwt_required()
 def delete_issue():
     id: int | None = request.args.get("id", type=int)
     if not id:

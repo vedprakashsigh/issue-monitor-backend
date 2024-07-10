@@ -1,13 +1,14 @@
 from typing import Dict
 from flask import Blueprint, jsonify, request
-from app.models import User, db, Project, Issue
-from sqlalchemy.orm import joinedload
+from flask_jwt_extended import jwt_required
+from app.models import User, db, Project
 
 
 projects_bp = Blueprint("projects", __name__)
 
 
 @projects_bp.route("/api/projects", methods=["GET"])
+@jwt_required()
 def get_projects():
     user_id: int | None = request.args.get("user_id", type=int)
     if user_id is None:
@@ -21,7 +22,13 @@ def get_projects():
             "name": project.name,
             "description": project.description,
             "issues": [
-                {"id": issue.id, "title": issue.title} for issue in project.issues
+                {
+                    "id": issue.id,
+                    "title": issue.title,
+                    "description": issue.description,
+                    "status": issue.status,
+                }
+                for issue in project.issues
             ],
         }
         for project in projects
@@ -31,6 +38,7 @@ def get_projects():
 
 
 @projects_bp.route("/api/project", methods=["GET"])
+@jwt_required()
 def get_project():
     project_id = request.args.get("project_id", type=int)
     user_id = request.args.get("user_id", type=int)
@@ -63,6 +71,7 @@ def get_project():
 
 
 @projects_bp.route("/api/projects", methods=["POST"])
+@jwt_required()
 def create_project():
     data: Dict = request.get_json()
     user_id: int | None = data.get("user_id")
@@ -89,6 +98,7 @@ def create_project():
 
 
 @projects_bp.route("/api/projects", methods=["PATCH"])
+@jwt_required()
 def edit_project():
     data: Dict = request.get_json()
     user_id: int | None = data.get("user_id")
@@ -124,6 +134,7 @@ def edit_project():
 
 
 @projects_bp.route("/api/project", methods=["DELETE"])
+@jwt_required()
 def delete_project():
     project_id = request.args.get("id", type=int)
     if not project_id:
