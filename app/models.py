@@ -9,7 +9,9 @@ class Issue(db.Model):
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(20), nullable=False)
-    project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("project.id", ondelete="CASCADE"), nullable=False
+    )
 
     def __init__(
         self, title: str, description: str, status: str, project_id: int
@@ -26,8 +28,12 @@ class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    issues = db.relationship("Issue", backref="project", lazy=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("user.id", ondelete="CASCADE"), nullable=False
+    )
+    issues = db.relationship(
+        "Issue", backref="project", lazy=True, cascade="all, delete-orphan"
+    )
 
     def __init__(
         self, name: str, description: str, issues: List[Issue], user_id: int
@@ -46,7 +52,9 @@ class User(db.Model):
     username = db.Column(db.String(100), nullable=False, unique=True)
     email = db.Column(db.String(100), nullable=False, unique=True)
     password_hash = db.Column(db.String(200), nullable=False)
-    projects = db.relationship("Project", backref="user", lazy=True)
+    projects = db.relationship(
+        "Project", backref="user", lazy=True, cascade="all, delete-orphan"
+    )
 
     def __init__(
         self, name: str, username: str, email: str, projects: List[Project]
