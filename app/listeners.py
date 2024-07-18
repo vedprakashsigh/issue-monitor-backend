@@ -5,7 +5,7 @@ from app.models import Log, db, User, Project, Issue, Comment
 
 
 def after_insert_listener(mapper, connection, target):
-    username = get_jwt_identity()["username"] if get_jwt_identity() else None
+    username = get_jwt_identity()["username"]
     user = User.query.filter_by(username=username).first()
     if not user:
         return
@@ -18,7 +18,7 @@ def after_insert_listener(mapper, connection, target):
 
 
 def after_update_listener(mapper, connection, target):
-    username = get_jwt_identity()["username"] if get_jwt_identity() else None
+    username = get_jwt_identity()["username"]
     user = User.query.filter_by(username=username).first()
     if not user:
         return
@@ -32,7 +32,7 @@ def after_update_listener(mapper, connection, target):
 
 
 def after_delete_listener(mapper, connection, target):
-    username = get_jwt_identity()["username"] if get_jwt_identity() else None
+    username = get_jwt_identity()["username"]
     user = User.query.filter_by(username=username).first()
     if not user:
         return
