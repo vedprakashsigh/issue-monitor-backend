@@ -1,5 +1,13 @@
 from typing import List
 from app.extentions import bcrypt, db
+from datetime import datetime
+
+
+class Role:
+    ADMIN = "admin"
+    PROJECT_MANAGER = "project_manager"
+    MEMBER = "member"
+    DEFAULT_ROLE = MEMBER
 
 
 class Issue(db.Model):
@@ -12,6 +20,9 @@ class Issue(db.Model):
     project_id = db.Column(
         db.Integer, db.ForeignKey("project.id", ondelete="CASCADE"), nullable=False
     )
+    comment = db.relationship(
+        "Comment", backref="issue", lazy=True, cascade="all, delete-orphan"
+    )
 
     def __init__(
         self, title: str, description: str, status: str, project_id: int
@@ -20,6 +31,13 @@ class Issue(db.Model):
         self.description = description
         self.status = status
         self.project_id = project_id
+
+
+project_members = db.Table(
+    "project_members",
+    db.Column("user_id", db.Integer, db.ForeignKey("user.id"), primary_key=True),
+    db.Column("project_id", db.Integer, db.ForeignKey("project.id"), primary_key=True),
+)
 
 
 class Project(db.Model):
@@ -34,14 +52,21 @@ class Project(db.Model):
     issues = db.relationship(
         "Issue", backref="project", lazy=True, cascade="all, delete-orphan"
     )
+    members = db.relationship(
+        "User",
+        secondary=project_members,
+        lazy="subquery",
+        backref=db.backref("project", lazy=True),
+    )
 
     def __init__(
-        self, name: str, description: str, issues: List[Issue], user_id: int
+        self, name: str, description: str, user_id: int, members: List = []
     ) -> None:
         self.name = name
         self.description = description
-        self.issues = issues
+        self.issues = []
         self.user_id = user_id
+        self.members = members
 
 
 class User(db.Model):
@@ -52,8 +77,15 @@ class User(db.Model):
     username = db.Column(db.String(100), nullable=False, unique=True)
     email = db.Column(db.String(100), nullable=False, unique=True)
     password_hash = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default=Role.DEFAULT_ROLE)
     projects = db.relationship(
         "Project", backref="user", lazy=True, cascade="all, delete-orphan"
+    )
+    comments = db.relationship(
+        "Comment", backref="user", lazy=True, cascade="all, delete-orphan"
+    )
+    logs = db.relationship(
+        "Log", backref="user", lazy=True, cascade="all, delete-orphan"
     )
 
     def __init__(
@@ -69,3 +101,33 @@ class User(db.Model):
 
     def check_password(self, password: str):
         return bcrypt.check_password_hash(self.password_hash, password)
+
+
+class Log(db.Model):
+    __tablename__ = "log"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    action = db.Column(db.String(255), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.now, nullable=False)
+
+    def __init__(self, user_id, action):
+        self.user_id = user_id
+        self.action = action
+
+
+class Comment(db.Model):
+    __tablename__ = "comment"
+
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    issue_id = db.Column(
+        db.Integer, db.ForeignKey("issue.id", ondelete="CASCADE"), nullable=False
+    )
+    timestamp = db.Column(db.DateTime, default=datetime.now, nullable=False)
+
+    def __init__(self, content, user_id, issue_id):
+        self.content = content
+        self.user_id = user_id
+        self.issue_id = issue_id

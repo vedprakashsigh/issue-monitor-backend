@@ -1,6 +1,8 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
+
 from app.models import db, Issue
+from app.decorators import role_required
 
 
 issues_bp = Blueprint("issues", __name__)
@@ -111,6 +113,7 @@ def edit_issue():
 
 @issues_bp.route("/api/issue", methods=["DELETE"])
 @jwt_required()
+@role_required("project_manager")
 def delete_issue():
     id: int | None = request.args.get("id", type=int)
     if not id:

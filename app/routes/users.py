@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
-from app.models import db, User
+from app.models import db, User, Role
 
 
 users_bp = Blueprint("users", __name__)
@@ -9,13 +9,33 @@ users_bp = Blueprint("users", __name__)
 @users_bp.route("/api/register", methods=["POST"])
 def register():
     data = request.get_json()
-    new_user = User(
-        name=data["name"], username=data["username"], email=data["email"], projects=[]
-    )
-    new_user.set_password(data["password"])
-    db.session.add(new_user)
+    name = data.get("name")
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
+
+    if not all([name, username, email, password]):
+        return jsonify({"message": "Missing fields"}), 400
+
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        return jsonify({"message": "Email already registered"}), 400
+
+    user = User(name=name, username=username, email=email, projects=[])
+
+    # Automatically assign role based on email domain
+    if email.endswith("@admin.com"):
+        user.role = Role.ADMIN
+    elif email.endswith("@manager.com"):
+        user.role = Role.PROJECT_MANAGER
+    else:
+        user.role = Role.DEFAULT_ROLE
+
+    user.set_password(password)
+    db.session.add(user)
     db.session.commit()
-    return jsonify({"message": "User registered successfully!"})
+
+    return jsonify({"message": "User registered successfully"}), 201
 
 
 @users_bp.route("/api/login", methods=["POST"])
@@ -38,4 +58,18 @@ def get_user():
     user = User.query.filter_by(username=current_user["username"]).first()
     if not user:
         return jsonify({"message": "User not found"}), 404
-    return jsonify({"logged_in_as": current_user, "user_id": user.id}), 200
+    return (
+        jsonify({"logged_in_as": current_user, "user_id": user.id, "role": user.role}),
+        200,
+    )
+
+
+@users_bp.route("/api/users", methods=["GET"])
+@jwt_required()
+def get_users():
+    users = User.query.all()
+    user_list = [
+        {"id": user.id, "name": user.name, "email": user.email, "role": user.role}
+        for user in users
+    ]
+    return jsonify({"users": user_list})

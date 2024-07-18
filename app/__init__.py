@@ -6,7 +6,11 @@ from flask_cors import CORS
 from app.routes.issues import issues_bp
 from app.routes.projects import projects_bp
 from app.routes.users import users_bp
+from app.routes.admin import admin_bp
+from app.routes.comments import comments_bp
+from app.routes.logs import logs_bp
 from app.extentions import jwt, bcrypt, migrate, db
+import app.listeners
 
 load_dotenv()
 
@@ -39,5 +43,8 @@ def create_app() -> Flask:
     app.register_blueprint(issues_bp)
     app.register_blueprint(projects_bp)
     app.register_blueprint(users_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(comments_bp)
+    app.register_blueprint(logs_bp)
 
     return app
