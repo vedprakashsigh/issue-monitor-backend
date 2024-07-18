@@ -47,7 +47,6 @@ def after_delete_listener(mapper, connection, target):
         session.commit()
 
 
-event.listen(User, "after_insert", after_insert_listener)
 event.listen(User, "after_update", after_update_listener)
 event.listen(User, "after_delete", after_delete_listener)
 
