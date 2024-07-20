@@ -26,6 +26,8 @@ def create_app() -> Flask:
 
     # Initialize SQLAlchemy with Flask app
     db.init_app(app)
+    with app.app_context():
+        db.create_all()
 
     # Initialize bcrypt with the app instance
     bcrypt.init_app(app)
