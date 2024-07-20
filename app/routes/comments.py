@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.models import Comment, User, db
+from app.decorators import role_required
 
 
 comments_bp = Blueprint("comments", __name__)
@@ -34,12 +35,23 @@ def get_comments():
 @comments_bp.route("/api/comment", methods=["GET"])
 @jwt_required()
 def get_comment():
-    comment_id = request.args.get("comment_id")
-    if not comment_id:
+    id = request.args.get("id")
+    if not id:
         return jsonify({"message": "Comment ID is required"}), 400
-    comment = Comment.query.filter_by(comment_id=comment_id).first()
+    comment = Comment.query.filter_by(id=id).first()
+    if not comment:
+        return jsonify({"message": "Comment not found"}), 404
+
     return (
-        jsonify(comment),
+        jsonify(
+            {
+                "id": comment.id,
+                "content": comment.content,
+                "user_id": comment.user_id,
+                "issue_id": comment.issue_id,
+                "timestamp": comment.timestamp,
+            }
+        ),
         200,
     )
 
@@ -62,18 +74,24 @@ def add_comment():
     return jsonify({"message": "Comment added successfully"}), 201
 
 
-@comments_bp.route("/api/comments", methods=["POST"])
+@comments_bp.route("/api/comment", methods=["PATCH"])
 @jwt_required()
 def edit_comment():
     data = request.get_json()
-    comment_id = data.get("comment_id")
-    if not comment_id:
+    id = request.args.get("id")
+    if not id:
         return jsonify({"message": "Comment ID is required"}), 400
-    user_id = get_jwt_identity()
-    comment = Comment.query.filter_by(id=comment_id).first()
-    if not comment or comment.user_id != user_id:
+    jwt = get_jwt_identity()
+    username = jwt["username"]
+    user = User.query.filter_by(username=username).first()
+    comment = Comment.query.filter_by(id=id).first()
+    if (
+        not user
+        or not comment
+        or (comment.user_id != user.id and user.role == "member")
+    ):
         return jsonify({"message": "Not authorized or comment not found"}), 403
-    comment.content = data.get("content", comment.content)
+    comment.content = data.get("content", comment.content) or ""
     db.session.commit()
     return jsonify({"message": "Comment updated successfully"}), 200
 
@@ -81,11 +99,15 @@ def edit_comment():
 @comments_bp.route("/api/comment", methods=["DELETE"])
 @jwt_required()
 def delete_comment():
-    data = request.get_json()
-    comment_id = data.get("id")
-    user_id = get_jwt_identity()
-    comment = Comment.query.filter_by(id=comment_id).first()
-    if not comment or comment.user_id != user_id:
+    id = request.args.get("id")
+    jwt = get_jwt_identity()
+    username = jwt["username"]
+    user = User.query.filter_by(username=username).first()
+    comment = Comment.query.filter_by(id=id).first()
+    if not user or not comment:
+        return jsonify({"message": "Not authorized or comment not found"}), 403
+    user_id = user.id
+    if not comment or (comment.user_id != user_id and user.role == "member"):
         return jsonify({"message": "Not authorized or comment not found"}), 403
     db.session.delete(comment)
     db.session.commit()

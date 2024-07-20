@@ -69,7 +69,13 @@ def get_user():
 def get_users():
     users = User.query.all()
     user_list = [
-        {"id": user.id, "name": user.name, "email": user.email, "role": user.role}
+        {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+            "username": user.username,
+        }
         for user in users
     ]
     return jsonify({"users": user_list})

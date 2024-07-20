@@ -11,7 +11,7 @@ def after_insert_listener(mapper, connection, target):
     if not user:
         return
     user_id = user.id
-    action = f"Inserted {target.__tablename__} with ID {target.id}"
+    action = f"Inserted {target.__tablename__} with ID {target.id} by {username}"
     log = Log(user_id=user_id, action=action)
     with Session(connection) as session:
         session.add(log)
@@ -26,7 +26,7 @@ def after_update_listener(mapper, connection, target):
         return
     user_id = user.id
     print(user_id)
-    action = f"Updated {target.__tablename__} with ID {target.id}"
+    action = f"Updated {target.__tablename__} with ID {target.id} by {username}"
     log = Log(user_id=user_id, action=action)
     with Session(connection) as session:
         session.add(log)
@@ -40,7 +40,7 @@ def after_delete_listener(mapper, connection, target):
     if not user:
         return
     user_id = user.id
-    action = f"Deleted {target.__tablename__} with ID {target.id}"
+    action = f"Deleted {target.__tablename__} with ID {target.id} by {username}"
     log = Log(user_id=user_id, action=action)
     with Session(connection) as session:
         session.add(log)

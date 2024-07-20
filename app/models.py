@@ -39,6 +39,12 @@ project_members = db.Table(
     db.Column("project_id", db.Integer, db.ForeignKey("project.id"), primary_key=True),
 )
 
+member_projects = db.Table(
+    "member_projects",
+    db.Column("user_id", db.Integer, db.ForeignKey("user.id"), primary_key=True),
+    db.Column("project_id", db.Integer, db.ForeignKey("project.id"), primary_key=True),
+)
+
 
 class Project(db.Model):
     __tablename__ = "project"
@@ -79,7 +85,10 @@ class User(db.Model):
     password_hash = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), nullable=False, default=Role.DEFAULT_ROLE)
     projects = db.relationship(
-        "Project", backref="user", lazy=True, cascade="all, delete-orphan"
+        "Project",
+        secondary=member_projects,
+        lazy="subquery",
+        backref=db.backref("user", lazy=True),
     )
     comments = db.relationship(
         "Comment", backref="user", lazy=True, cascade="all, delete-orphan"

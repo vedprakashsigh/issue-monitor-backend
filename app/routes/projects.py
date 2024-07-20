@@ -15,14 +15,24 @@ def get_projects():
     if user_id is None:
         return jsonify({"message": "User ID is required"}), 400
 
-    projects = Project.query.filter_by(user_id=user_id).all()
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    projects = user.projects
 
     project_data = [
         {
             "id": project.id,
             "name": project.name,
             "description": project.description,
-            "members": [member.id for member in project.members],
+            "members": [
+                {
+                    "id": member.id,
+                    "name": member.name,
+                    "role": member.role,
+                }
+                for member in project.members
+            ],
             "issues": [
                 {
                     "id": issue.id,
@@ -47,7 +57,15 @@ def get_users(project_id):
     if not project:
         return jsonify({"message": "Project not found"}), 404
     member_data = {
-        "members": [member for member in project.members],
+        "members": [
+            {
+                "id": member.id,
+                "name": member.name,
+                "role": member.role,
+                "email": member.email,
+            }
+            for member in project.members
+        ],
     }
 
     return jsonify(member_data), 200
@@ -64,7 +82,14 @@ def get_project(project_id):
                 "name": project.name,
                 "description": project.description,
                 "user_id": project.user_id,
-                "members": [member.id for member in project.members],
+                "members": [
+                    {
+                        "id": member.id,
+                        "name": member.name,
+                        "role": member.role,
+                    }
+                    for member in project.members
+                ],
                 "issues": [
                     {
                         "id": issue.id,
@@ -100,6 +125,7 @@ def create_project():
     )
 
     db.session.add(new_project)
+    user.projects.append(new_project)
     db.session.commit()
 
     return (
@@ -165,6 +191,7 @@ def delete_project():
 
 @projects_bp.route("/api/projects/<int:project_id>/add_user", methods=["POST"])
 @jwt_required()
+@role_required("project_manager")
 def add_user_to_project(project_id):
     current_user_username = get_jwt_identity()
     current_user = User.query.filter_by(
@@ -191,7 +218,44 @@ def add_user_to_project(project_id):
 
     if user not in project.members:
         project.members.append(user)
+        user.projects.append(project)
         db.session.commit()
         return jsonify({"message": "User added to project!"}), 200
     else:
         return jsonify({"message": "User is already a member of the project!"}), 400
+
+
+@projects_bp.route("/api/projects/<int:project_id>/remove_user", methods=["POST"])
+@jwt_required()
+@role_required("project_manager")
+def remove_user_to_project(project_id):
+    current_user_username = get_jwt_identity()
+    current_user = User.query.filter_by(
+        username=current_user_username["username"]
+    ).first()
+    if not current_user:
+        return jsonify({"message": "User not found!"}), 404
+
+    # Check if the current user is an admin or the project manager
+    project = Project.query.filter_by(id=project_id).first()
+    if not project:
+        return jsonify({"message": "Project not found!"}), 404
+    if (
+        current_user.role not in [Role.ADMIN, Role.PROJECT_MANAGER]
+        and project.user_id != current_user.id
+    ):
+        return jsonify({"message": "Access forbidden!"}), 403
+
+    data = request.get_json()
+    user_id = data.get("user_id")
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return jsonify({"message": "User not found!"}), 404
+
+    if user in project.members:
+        project.members.remove(user)
+        user.projects.remove(project)
+        db.session.commit()
+        return jsonify({"message": "User removed to project!"}), 200
+    else:
+        return jsonify({"message": "User is not already a member of the project!"}), 400
