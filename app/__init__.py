@@ -9,7 +9,7 @@ from app.routes.users import users_bp
 from app.routes.admin import admin_bp
 from app.routes.comments import comments_bp
 from app.routes.logs import logs_bp
-from app.extentions import jwt, bcrypt, migrate, db
+from app.extentions import jwt, bcrypt,  db
 import app.listeners
 
 load_dotenv()
@@ -33,8 +33,6 @@ def create_app() -> Flask:
     # Initialize jwt with the app instance
     jwt.init_app(app)
 
-    # Initialize migrate with the app instance
-    migrate.init_app(app, db)
 
     # Enable CORS for all routes
     CORS(app)

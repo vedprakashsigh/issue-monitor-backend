@@ -40,19 +40,13 @@ To set up the backend locally, follow these steps:
 
    Update the database configuration in `config.py` with your MySQL details.
 
-5. **Initialize the Database:**
-
-   ```bash
-   flask db upgrade
-   ```
-
-6. **Run the Development Server:**
+5. **Run the Development Server:**
 
    ```bash
    flask run
    ```
 
-7. **Access the API:**
+6. **Access the API:**
 
    The backend will be available at `http://localhost:5000`.
 
@@ -85,8 +79,8 @@ To set up the backend locally, follow these steps:
 
 ## Configuration
 
-- **Database Configuration:** Update the `SQLALCHEMY_DATABASE_URI` in `config.py` with your MySQL database details.
-- **JWT Configuration:** Set the `SECRET_KEY` and `JWT_SECRET_KEY` in `config.py` for token generation and validation.
+- **Database Configuration:** Update the `SQLALCHEMY_DATABASE_URI` in `.env` with your database details.
+- **JWT Configuration:** Set the `SECRET_KEY` and `JWT_SECRET_KEY` in `.env` for token generation and validation.
 
 ## Contributing
 
@@ -103,4 +97,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ---
 
-For more detailed documentation on the frontend, please refer to the [Frontend README](https://github.com/vedprakashsigh/issue-monitor-frontend/README.md).
+For more detailed documentation on the frontend, please refer to the [Frontend README](https://github.com/vedprakashsigh/issue-monitor-frontend/).
