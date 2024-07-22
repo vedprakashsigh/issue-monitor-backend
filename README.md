@@ -2,7 +2,7 @@
 
 ## Overview
 
-The backend of the Issue Monitor web application is developed using Flask and MySQL. It handles user authentication, project management, issue tracking, and user roles. The API endpoints are used by the frontend to interact with the database and perform CRUD operations.
+The backend of the Issue Monitor web application is developed using Flask and Postgres. It handles user authentication, project management, issue tracking, and user roles. The API endpoints are used by the frontend to interact with the database and perform CRUD operations.
 
 ## Features
 
@@ -38,7 +38,7 @@ To set up the backend locally, follow these steps:
 
 4. **Configure the Database:**
 
-   Update the database configuration in `config.py` with your MySQL details.
+   Update the database configuration in `config.py` with your Postgres details.
 
 5. **Run the Development Server:**
 
@@ -76,6 +76,10 @@ To set up the backend locally, follow these steps:
 - `GET /api/users`: Get a list of all users.
 - `POST /api/projects/<project_id>/add_user`: Add a user to a project.
 - `POST /api/projects/<project_id>/remove_user`: Remove a user from a project.
+
+### **Logs:**
+
+- `GET /api/logs`: Get a list of all logs if not given `count` as query parameter, else gives the last `count` logs.
 
 ## Configuration
 
