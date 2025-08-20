@@ -29,3 +29,8 @@ def change_role():
     db.session.commit()
 
     return jsonify({"message": "User role updated successfully"}), 200
+
+
+@admin_bp.route("/api/health", methods=["GET"])
+def health():
+    return jsonify({"message": "Healthy"}), 200
